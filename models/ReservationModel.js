@@ -57,7 +57,7 @@ const ReservationSchema = new Schema({
         type: Number,
         required: false
     },
-    cancelled: {
+    isCancelled: {
         type: Boolean,
         default: false
     },
