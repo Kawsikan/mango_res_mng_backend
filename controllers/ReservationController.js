@@ -16,13 +16,19 @@ const createReservation = async (req, res) => {
         // calculate the total amount
         const totalAmount = calculateTotalAmount(checkInDate, checkOutDate, rate.cost);
 
+        const checkInDateUpdated = new Date(checkInDate);
+        checkInDateUpdated.setHours(13, 0, 0, 0);
+
+        const checkOutDateUpdated = new Date(checkOutDate);
+        checkOutDateUpdated.setHours(11, 0, 0, 0);
+
         const reservation = new Reservation({
             guestId,
             guestName,
             guestEmail,
             room,
-            checkInDate,
-            checkOutDate,
+            checkInDate: checkInDateUpdated,
+            checkOutDate: checkOutDateUpdated,
             boardType,
             occupancy,
             parkingNeeded,
@@ -84,7 +90,7 @@ const checkRoomAvailability = async (req, res) => {
 
 const cancelReservation = async (req, res) => {
     try {
-        const { reservationId } = req.params;
+        const { reservationId } = req.body;
 
         const reservation = await Reservation.findById(reservationId);
 
@@ -96,32 +102,21 @@ const cancelReservation = async (req, res) => {
             return res.status(400).json({ message: 'Reservation is already cancelled' });
         }
 
-        // const currentDate = new Date();
-        // const plannedArrivalTime = new Date(reservation.plannedArrivalTime);
-        // const checkInDate = new Date(reservation.checkInDate);
-
-        // // Calculate the time difference between the current date and planned arrival time
-        // const timeDifference = plannedArrivalTime - currentDate;
-        // const hoursDifference = Math.ceil(timeDifference / (1000 * 60 * 60));
-
-
         const currentDate = new Date();
         const checkInDate = new Date(reservation.checkInDate);
         let cancellationFee = 0;
-        
-        if((currentDate.getDate - checkInDate)>1){
+
+        const differenceInMilliseconds = checkInDate.getTime() - currentDate.getTime();
+        const differenceInHours = Math.ceil(differenceInMilliseconds / (1000 * 60 * 60));
+
+
+        if (differenceInHours >= 24) {
             cancellationFee = 0;
+        } else if (differenceInHours >= 12) {
+            cancellationFee = reservation.totalAmount * 0.2;
+        } else {
+            cancellationFee = reservation.totalAmount;
         }
-
-        const timeDifference = 1300 - currentDate.getTime();
-        const hoursDifference = Math.ceil(timeDifference / (1000 * 60 * 60));
-
-
-        // Check if the cancellation is within 12 hours prior to check-in
-        if (hoursDifference <= 12) {
-            cancellationFee = reservation.totalAmount * 0.2; // 20% cancellation fee
-        }
-
 
         reservation.isCancelled = true;
         reservation.cancelledDate = currentDate;
@@ -135,10 +130,23 @@ const cancelReservation = async (req, res) => {
     }
 };
 
+const getAllReservation = async (req, res) => {
+    try {
+        const reservations = await Reservation.find();
+        res.status(200).json(reservations);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
 
 
 module.exports = {
     createReservation,
     checkRoomAvailability,
-    cancelReservation
+    cancelReservation,
+    getAllReservation
 }
