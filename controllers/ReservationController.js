@@ -5,16 +5,7 @@ const Room = require('../models/RoomModel');
 
 const createReservation = async (req, res) => {
     try {
-        const { guestId, guestName, guestEmail, room, checkInDate, checkOutDate, boardType, occupancy, parkingNeeded, inRoomAmenities, plannedArrivalTime, specialNotes, paymentMethod } = req.body;
-
-        const rate = await Rate.findOne({ boardType: boardType, occupancy: occupancy });
-
-        if (!rate) {
-            return res.status(400).json({ message: 'Invalid board type or occupancy.' });
-        }
-
-        // calculate the total amount
-        const totalAmount = calculateTotalAmount(checkInDate, checkOutDate, rate.cost);
+        const { guestId, guestName, guestEmail, room, checkInDate, checkOutDate, boardType, occupancy, parkingNeeded, inRoomAmenities, plannedArrivalTime, specialNotes, paymentMethod, totalAmount } = req.body;
 
         const checkInDateUpdated = new Date(checkInDate);
         checkInDateUpdated.setHours(13, 0, 0, 0);
@@ -47,16 +38,25 @@ const createReservation = async (req, res) => {
     }
 };
 
-const calculateTotalAmount = (checkInDate, checkOutDate, cost) => {
+const calculateTotalAmount = async (req, res) => {
+
+    const { checkInDate, checkOutDate, boardType, occupancy } = req.body;
+
+    const rate = await Rate.findOne({ boardType: boardType, occupancy: occupancy });
+
+    if (!rate) {
+        return res.status(400).json({ message: 'Invalid board type or occupancy.' });
+    }
+    const { cost } = rate;
 
     try {
         const nights = Math.ceil((new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24));
         const totalAmount = nights * cost;
-        return totalAmount;
+        res.status(201).json(totalAmount);
 
     } catch (error) {
         console.error(error);
-        throw new Error('Unable to calculate total amount');
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -148,5 +148,6 @@ module.exports = {
     createReservation,
     checkRoomAvailability,
     cancelReservation,
-    getAllReservation
+    getAllReservation,
+    calculateTotalAmount
 }
