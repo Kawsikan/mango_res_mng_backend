@@ -87,6 +87,32 @@ const checkRoomAvailability = async (req, res) => {
     }
 };
 
+const checkRoomAvailabilityForDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.body;
+
+        // Get all reservations within the date range
+        const reservations = await Reservation.find({
+            checkInDate: { $lte: endDate },
+            checkOutDate: { $gte: startDate },
+        });
+
+        // Get all room IDs from the reservations
+        const reservedRoomIds = reservations.map(reservation => reservation.room.toString());
+
+        // Get all rooms
+        const rooms = await Room.find();
+
+        // Filter out the reserved rooms within the date range
+        const availableRooms = rooms.filter(room => !reservedRoomIds.includes(room._id.toString()));
+
+        res.status(200).json({ availableRooms });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 
 const cancelReservation = async (req, res) => {
     try {
@@ -141,6 +167,15 @@ const getAllReservation = async (req, res) => {
     }
 };
 
+const deleteAllReservations = async (req, res) => {
+    try {
+        await Reservation.deleteMany();
+        res.status(200).json({ message: 'All reservations have been deleted.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 
 
 
@@ -149,5 +184,7 @@ module.exports = {
     checkRoomAvailability,
     cancelReservation,
     getAllReservation,
-    calculateTotalAmount
+    calculateTotalAmount,
+    checkRoomAvailabilityForDateRange,
+    deleteAllReservations
 }
