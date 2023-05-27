@@ -1,13 +1,12 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
-
 const { SECRET } = require('../config');
 const passport = require('passport');
 
 const userRegister = async (req, res) => {
     try {
-        // Check if user with given email already exists
+
         const existingUser = await User.findOne({ email: req.body.email });
         if (existingUser) {
             return res.status(409).json({ message: 'User already exists' });
@@ -49,21 +48,24 @@ const userLogin = async (req, res) => {
                 userId: user._id,
                 email: user.email
             },
-            process.env.JWT_SECRET,
+            SECRET,
             {
                 expiresIn: '1h'
             }
         );
 
         res.status(200).json({ message: 'Login successful', token });
-        
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 
+const userAuth = passport.authenticate('jwt', { session: false });
+
 module.exports = {
     userRegister,
-    userLogin
+    userLogin,
+    userAuth
 }

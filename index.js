@@ -4,8 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const passport = require('passport');
-
-const path = require('path');
+const { APP_PORT, MONGODB } = require('./config');
 
 dotenv.config();
 const app = express();
@@ -18,8 +17,8 @@ app.use(passport.initialize());
 
 require('./middlewares/Validate.token')(passport);
 
-const PORT = process.env.PORT;
-const MONGODB_URI = process.env.MONGODB_URI;
+const PORT = APP_PORT;
+const MONGODB_URI = MONGODB;
 
 
 mongoose.connect(MONGODB_URI, {

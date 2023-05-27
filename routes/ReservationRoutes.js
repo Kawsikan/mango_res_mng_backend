@@ -4,9 +4,10 @@ const { createReservation } = require('../controllers/ReservationController');
 const { checkRoomAvailability } = require('../controllers/ReservationController');
 const { cancelReservation } = require('../controllers/ReservationController')
 const { getAllReservation } = require('../controllers/ReservationController')
-const { calculateTotalAmount } = require('../controllers/ReservationController')
+const { calculateTotalAmount } = require('../controllers/ReservationController');
+const { userAuth } = require('../controllers/UserController');
 
-router.post('/', async (req, res) => {
+router.post('/', userAuth, async (req, res) => {
     await createReservation(req, res);
 });
 
